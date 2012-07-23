@@ -1,14 +1,60 @@
-#include <sys/types.h>
-#include <sys/ptrace.h>
-#include <sys/wait.h>
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE /* getopt_long */
+#endif
 
-#include <err.h>
-#include <libunwind-ptrace.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/ptrace.h>
+
 #include <stdlib.h>
-#include <libunwind.h>
+#include <stdio.h>
 #include <endian.h>
 #include <sysexits.h>
-#include <stdio.h>
+#include <getopt.h>
+#include <err.h>
+
+#include <libunwind.h>
+#include <libunwind-ptrace.h>
+
+static void show_backtrace(pid_t pid, int nmax);
+static void usage();
+static const char *g_progname;
+
+
+int main(int argc, char *argv[])
+{
+    int pid, nmax = -1;
+    g_progname = argv[0];
+
+    while(1) {
+        int c;
+        static struct option long_opts[] = {
+            {"max-depth", required_argument, 0,  'm' },
+            {"help",      no_argument, 0,  'h' }
+        };
+
+        c = getopt_long(argc, argv, "m:h", long_opts, NULL);
+        if (c == -1) {
+            argc -= optind;
+            argv += optind;
+            break;
+        }
+
+        switch(c) {
+            case 'm': nmax = atoi(optarg); break;
+            default: usage();
+        }
+    }
+
+    if (argc != 1) {
+        usage();
+    }
+
+    pid = atoi(argv[0]);
+    show_backtrace(pid, nmax);
+    return 0;
+}
+
 
 int wait4stop(pid_t pid)
 {
@@ -24,7 +70,7 @@ int wait4stop(pid_t pid)
     return 1;
 }
 
-void show_backtrace(pid_t pid)
+void show_backtrace(pid_t pid, int nmax)
 {
     unw_cursor_t resume_cursor;
     unw_cursor_t cursor; unw_context_t uc;
@@ -57,21 +103,17 @@ void show_backtrace(pid_t pid)
         unw_get_reg(&cursor, UNW_REG_IP, &ip);
         unw_get_reg(&cursor, UNW_REG_SP, &sp);
         printf ("0x%lx\n", ip);
-    } while (unw_step(&cursor) > 0);
+    } while (--nmax && unw_step(&cursor) > 0);
 
+    /* resume execution at top frame */
     _UPT_resume(addr_space, &resume_cursor, rctx);
     _UPT_destroy(rctx);
 }
 
-int main(int argc, char *argv[])
+void usage()
 {
-    int pid;
-
-    if (argc < 2) {
-        errx(EX_USAGE, "Usage: %s pid", argv[0]);
-    }
-
-    pid = atoi(argv[1]);
-    show_backtrace(pid);
-    return EXIT_SUCCESS;
+    fprintf(stderr, "Usage: %s [-m|--max-depth N] [-h] pid\n", g_progname);
+    fprintf(stderr, "\t-h|--help: show this help\n"
+                    "\t-m|--max-depth N: unwind no more than N frames\n\n");
+    exit(EX_USAGE);
 }

@@ -6,18 +6,22 @@ set -o pipefail
 usage()
 {
     cat - >&2 <<END
-Usage: $0 [-vD] pid [...]
+Usage: $0 [-m N] [-Dv] pid [...]
     -v: be verbose (print debug information)
+    -m N: unwind no more than N frames
     -D: do not demangle symbols
 END
     
     exit 64
 }
 
-while getopts vDh o
+UNWIND_OPTS=
+
+while getopts vm:Dh o
 do
   case "$o" in
     D) NODEMANGLE=1 ;;
+    m) UNWIND_OPTS="-m $OPTARG" ;;
     v) VERBOSE=1    ;;
     *) usage        ;;
   esac
@@ -40,7 +44,7 @@ while [ $# -ne 0 ]; do
     cat /proc/$pid/cmdline
     echo
 
-    cmd="$DIR/unwind $pid | perl $DIR/parse_stack.pl $pid"
+    cmd="$DIR/unwind $UNWIND_OPTS -- $pid | perl $DIR/parse_stack.pl $pid"
     [[ $VERBOSE ]]    || cmd="$cmd | grep -v '^\*\*\*'"
     [[ $NODEMANGLE ]] || cmd="$cmd | c++filt"
     eval $cmd
