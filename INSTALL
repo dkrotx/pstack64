@@ -1,2 +1,5 @@
+In order to build you should install libunwind.
+Use your distro or directly http://www.nongnu.org/libunwind/download.html (checked with 0.99 and 1.0.1)
+
 Installation not performed. Just do
 $ make
