@@ -1,4 +1,4 @@
-pstack64 - pstack(1) analogue working with x84_64 binaries (pstack 64-bit)
+pstack64 - pstack(1) analogue working with x84_64 binaries (pstack 64-bit / pstack amd64)
 -------------------------------------------------------------------------------
 Copyright (C) 2012 Jan Kisel - jdkrot@gmail.com
 
