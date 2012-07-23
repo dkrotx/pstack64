@@ -1,0 +1,48 @@
+pstack64 - pstack(1) analogue working with x84_64 binaries
+-------------------------------------------------------------------------------
+Copyright (C) 2012 Jan Kisel - jdkrot@gmail.com
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+-------------------------------------------------------------------------------
+    This actually a demonstation of how to take a backtrace of process and 
+do it's pretty-printing. I think it's ok to use it for studying, but maybe 
+it's not suitable for real case since it uses Perl and binutils instead of
+doing this things correctly with libelf & libdwarf.
+
+Benefits:
+    o It's easy to read :-)
+    o It shows symbols much faster than `gdb -batch` since it 
+      performs a lazy lookup.
+    o Works well with executables and shared objects. Falling back to dynamic 
+      symbols lookup if none of them found in (debug) table.
+
+Drawbacks:
+    o It's strongly depends on GNU binutils and therefore it's Linux-only
+    o It doesn't support threads (even if you pick up right LWP)
+
+
+-------------------------------------------------------------------------------
+Usage: ./pstack64 [-vD] pid [...]
+   -v: be verbose (print debug information)
+   -D: do not demangle symbols
+
+WARNING:
+    If you see "Permission denied" message, then you need to turn off
+ptrace(2)-protection: 
+    $ sudo sysctl -w kernel.yama.ptrace_scope=0
+    
+    or simply run pstack64 using `sudo`. It's also necessary to trace processes
+which doesn't belongs to you.
