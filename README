@@ -35,8 +35,9 @@ Drawbacks:
 
 
 -------------------------------------------------------------------------------
-Usage: ./pstack64 [-vD] pid [...]
+Usage: ./pstack64 [-m N] [-Dv] pid [...]
    -v: be verbose (print debug information)
+   -m N: unwind no more than N frames
    -D: do not demangle symbols
 
 WARNING:
